@@ -15,7 +15,6 @@ app.use(cors());
 app.use(express.json()); 
 function mapMessagesToContent(messages) {
     return messages.map(msg => ({
-        // Map frontend's 'sender' role to SDK's 'role'
         role: msg.sender === 'user' ? 'user' : 'model',
         parts: [{ text: msg.text }],
     }));
@@ -35,7 +34,6 @@ function mapHistoryToContent(simpleHistory) {
 }
 
 app.post("/api/chat", async (req, res) => {
-    // Expected from frontend: { history: [...], newMessage: "..." }
     const { history = [], newMessage } = req.body;
 
     if (!newMessage) {
@@ -43,19 +41,12 @@ app.post("/api/chat", async (req, res) => {
     }
 
     try {
-        // 1. Construct the full conversation content array
-        // NOTE: The new message needs to be structured and added to the content array
         const allMessages = [
             ...history, 
             { sender: 'user', text: newMessage } // Add the new message at the end
         ];
-
-        // 2. Convert to the SDK's required Content structure
         const contentArray = mapMessagesToContent(allMessages);
         
-        // 3. Call generateContent with the full conversation history
-        // FIX: The SDK uses 'models' to access the GenerativeModel, and we use 
-        // generateContent on the client instance with the model name.
         const result = await genAI.models.generateContent({
             model: "gemini-2.5-flash",
             contents: contentArray, // Pass the full history as contents
